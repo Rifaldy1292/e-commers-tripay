@@ -8,6 +8,12 @@ export default defineNuxtConfig({
   },
 
   css: ["~/assets/css/main.css"],
+  app: {
+    head: {
+      title: "Judul Web Default",
+      meta: [{ name: "description", content: "Deskripsi website kamu" }],
+    },
+  },
 
   routeRules: {
     "/": { prerender: true },

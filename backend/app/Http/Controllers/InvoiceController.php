@@ -7,10 +7,7 @@ use Illuminate\Http\Request;
 
 class InvoiceController extends Controller
 {
-    /**
-     * Tampilkan semua invoice (beserta relasi product).
-     * GET /api/invoices
-     */
+    
     public function index()
     {
         return response()->json(
@@ -19,10 +16,7 @@ class InvoiceController extends Controller
         );
     }
 
-    /**
-     * Simpan invoice baru.
-     * POST /api/invoices
-     */
+  
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -38,19 +32,13 @@ class InvoiceController extends Controller
         return response()->json($invoice->load('product'), 201);
     }
 
-    /**
-     * Detail invoice tertentu.
-     * GET /api/invoices/{invoice}
-     */
+  
     public function show(Invoice $invoice)
     {
         return response()->json($invoice->load('product'), 200);
     }
 
-    /**
-     * Update invoice.
-     * PUT /api/invoices/{invoice}
-     */
+   
     public function update(Request $request, Invoice $invoice)
     {
         $validated = $request->validate([
@@ -66,10 +54,7 @@ class InvoiceController extends Controller
         return response()->json($invoice->load('product'), 200);
     }
 
-    /**
-     * Hapus invoice.
-     * DELETE /api/invoices/{invoice}
-     */
+   
     public function destroy(Invoice $invoice)
     {
         $invoice->delete();

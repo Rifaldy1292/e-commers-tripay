@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { useMutation, useQueryClient } from "@tanstack/vue-query";
+import { productApi } from "~/services/api/product";
 
 const isAddModalOpen = ref(false);
-
+const toast = useToast();
 const newProduct = ref({
   sku: "",
   name: "",
@@ -32,9 +34,43 @@ function closeAddModal() {
   isAddModalOpen.value = false;
 }
 
+const queryClient = useQueryClient();
+
+const addProductMutation = useMutation({
+  mutationFn: async () => {
+    return await productApi.create({
+      sku: newProduct.value.sku,
+      name: newProduct.value.name,
+      price: newProduct.value.price,
+      reference: newProduct.value.reference,
+    });
+  },
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ["products"] });
+
+    toast.add({
+      title: "Produk berhasil ditambahkan",
+      description: "Data sudah tersimpan ke database",
+    });
+
+    closeAddModal();
+  },
+  onError: (error) => {
+    console.error("Gagal menambah produk:", error);
+
+    toast.add({
+      title: "Gagal menambah produk",
+      description: "Terjadi kesalahan saat menyimpan data",
+    });
+  },
+});
+
 function submitNewProduct() {
-  console.log("Submit produk:", newProduct.value);
-  closeAddModal();
+  if (!newProduct.value.name || !newProduct.value.sku) {
+    alert("Nama dan SKU wajib diisi");
+    return;
+  }
+  addProductMutation.mutate();
 }
 </script>
 

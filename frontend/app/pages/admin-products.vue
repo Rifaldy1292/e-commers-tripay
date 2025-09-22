@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { h, resolveComponent, ref } from "vue";
 import type { TableColumn } from "@nuxt/ui";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query";
+import { productApi } from "~/services/api/product";
 
 const UBadge = resolveComponent("UBadge");
 const UButton = resolveComponent("UButton");
@@ -9,42 +11,53 @@ const UFormField = resolveComponent("UFormField");
 const UInput = resolveComponent("UInput");
 
 type Product = {
-  id: number;
+  id: number | string;
   sku: string;
   name: string;
   price: number;
-  reference: string;
-  created_at: string;
-  updated_at: string;
+  reference?: string;
 };
 
-const data = ref<Product[]>([
-  {
-    id: 1,
-    sku: "SKU-001",
-    name: "Produk A",
-    price: 120000,
-    reference: "TRIPAY-REF-001",
-    created_at: "2025-09-21 10:00:00",
-    updated_at: "2025-09-21 12:00:00",
+const {
+  data: data,
+  isLoading,
+  isError,
+  refetch,
+} = useQuery({
+  queryKey: ["products"],
+  queryFn: async () => {
+    const res = await productApi.getAll();
+    return res.data;
   },
-  {
-    id: 2,
-    sku: "SKU-002",
-    name: "Produk B",
-    price: 200000,
-    reference: "TRIPAY-REF-002",
-    created_at: "2025-09-20 09:00:00",
-    updated_at: "2025-09-20 11:30:00",
+});
+const toast = useToast();
+const deleteProductMutation = useMutation({
+  mutationFn: async (productId: number | string) => {
+    return await productApi.remove(+productId);
   },
-]);
+  onSuccess: () => {
+    refetch();
 
-// Modal konfirmasi hapus
+    toast.add({
+      title: "Produk berhasil dihapus",
+      description: "Data produk sudah dihapus",
+    });
+  },
+  onError: (error) => {
+    console.error("Gagal menghapus produk:", error);
+    toast.add({
+      title: "Gagal menghapus produk",
+      description: "Terjadi kesalahan saat menghapus produk",
+    });
+  },
+});
+
 const showConfirmModal = ref(false);
 const itemToDelete = ref<number | null>(null);
 
 function handleDelete(id: number) {
-  itemToDelete.value = id;
+  itemToDelete.value = +id;
+  console.log(itemToDelete.value);
   showConfirmModal.value = true;
 }
 
@@ -52,39 +65,73 @@ function cancelDelete() {
   showConfirmModal.value = false;
   itemToDelete.value = null;
 }
-
-function doDelete() {
-  if (itemToDelete.value !== null) {
-    data.value = data.value.filter((p) => p.id !== itemToDelete.value);
+function doDelete(id: number) {
+  console.log(id);
+  if (id === 0) {
+    console.warn("ID tidak valid");
+    cancelDelete();
+    return;
   }
+  deleteProductMutation.mutate(+id);
   cancelDelete();
 }
 
-// Modal edit
 const showEditModal = ref(false);
 const currentEdit = ref<Product | null>(null);
 
 function handleEdit(id: number) {
-  const prod = data.value.find((p) => p.id === id);
+  const prod = data.value.find((p: Product) => p.id === id);
   if (prod) {
     currentEdit.value = { ...prod };
     showEditModal.value = true;
   }
 }
+const queryClient = useQueryClient();
+const editProductMutation = useMutation({
+  mutationFn: async (variables: { id: number; data: Partial<Product> }) => {
+    return await productApi.update(variables.id, variables.data);
+  },
+  onSuccess: (response, variables) => {
+    queryClient.invalidateQueries({ queryKey: ["products"] });
 
+    toast.add({
+      title: "Produk berhasil diperbarui",
+      description: "Data produk sudah diperbarui",
+    });
+
+    showEditModal.value = false;
+  },
+  onError: (error) => {
+    console.error("Gagal mengedit produk:", error);
+    toast.add({
+      title: "Gagal mengedit produk",
+      description: "Terjadi kesalahan saat menyimpan perubahan",
+    });
+  },
+});
 function cancelEdit() {
   showEditModal.value = false;
   currentEdit.value = null;
 }
 
 function saveEdit() {
-  if (currentEdit.value) {
-    const idx = data.value.findIndex((p) => p.id === currentEdit.value!.id);
-    if (idx !== -1) {
-      data.value[idx] = { ...currentEdit.value };
-    }
+  if (!currentEdit.value) {
+    toast.add({
+      title: "Tidak ada produk yang diedit",
+      description: "Silakan pilih produk terlebih dahulu",
+    });
+    return;
   }
-  cancelEdit();
+
+  editProductMutation.mutate({
+    id: +currentEdit.value.id,
+    data: {
+      sku: currentEdit.value.sku,
+      name: currentEdit.value.name,
+      price: currentEdit.value.price,
+      reference: currentEdit.value.reference,
+    },
+  });
 }
 
 const columns: TableColumn<Product>[] = [
@@ -167,7 +214,6 @@ const columns: TableColumn<Product>[] = [
       <UTable :data="data" :columns="columns" class="text-sm" />
     </UCard>
 
-    <!-- Modal Edit Product -->
     <UModal v-model:open="showEditModal" title="Edit Produk">
       <template #body>
         <div v-if="currentEdit" class="space-y-4 px-4 pb-2">
@@ -200,7 +246,6 @@ const columns: TableColumn<Product>[] = [
       </template>
     </UModal>
 
-    <!-- Modal Konfirmasi Hapus -->
     <UModal v-model:open="showConfirmModal" title="Konfirmasi Hapus">
       <template #body>
         <div class="p-4">
@@ -213,7 +258,9 @@ const columns: TableColumn<Product>[] = [
           <UButton variant="outline" color="neutral" @click="cancelDelete">
             Batal
           </UButton>
-          <UButton color="error" @click="doDelete">Hapus</UButton>
+          <UButton color="error" @click="doDelete(itemToDelete || 0)"
+            >Hapus</UButton
+          >
         </div>
       </template>
     </UModal>

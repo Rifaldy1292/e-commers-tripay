@@ -1,36 +1,23 @@
 <script setup lang="ts">
 import { h, resolveComponent, ref } from "vue";
 import type { TableColumn } from "@nuxt/ui";
+import { invoiceApi, type Invoice } from "~/services/api/invoices";
+import { useQuery } from "@tanstack/vue-query";
 
 const UButton = resolveComponent("UButton");
 
-type Invoice = {
-  id: number;
-  product_id: number;
-  tripay_reference: string;
-  buyer_email: string;
-  buyer_phone: string;
-  raw_response: string; // JSON disimpan sebagai string
-};
-
-const invoices = ref<Invoice[]>([
-  {
-    id: 1,
-    product_id: 101,
-    tripay_reference: "TRX-ABC-123",
-    buyer_email: "customer1@example.com",
-    buyer_phone: "08123456789",
-    raw_response: '{"status":"paid","amount":100000}',
+const {
+  data: invoices,
+  isLoading,
+  isError,
+  refetch,
+} = useQuery({
+  queryKey: ["invoices"],
+  queryFn: async () => {
+    const res = await invoiceApi.getAll();
+    return res.data;
   },
-  {
-    id: 2,
-    product_id: 102,
-    tripay_reference: "TRX-DEF-456",
-    buyer_email: "customer2@example.com",
-    buyer_phone: "08198765432",
-    raw_response: '{"status":"pending","amount":150000}',
-  },
-]);
+});
 
 const columns: TableColumn<Invoice>[] = [
   {
@@ -68,7 +55,6 @@ const columns: TableColumn<Invoice>[] = [
       if (typeof value === "string") {
         jsonString = value;
       } else {
-        // kalau bukan string, ubah ke string agar tetap bisa tampil
         jsonString = JSON.stringify(value);
       }
 

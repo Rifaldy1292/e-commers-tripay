@@ -7,10 +7,7 @@ use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    /**
-     * GET /api/products
-     * Tampilkan semua produk beserta daftar invoice-nya.
-     */
+   
     public function index()
     {
         return response()->json(
@@ -19,10 +16,7 @@ class ProductController extends Controller
         );
     }
 
-    /**
-     * POST /api/products
-     * Simpan produk baru.
-     */
+   
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -37,19 +31,14 @@ class ProductController extends Controller
         return response()->json($product->load('invoices'), 201);
     }
 
-    /**
-     * GET /api/products/{product}
-     * Detail produk tertentu.
-     */
+   
     public function show(Product $product)
     {
         return response()->json($product->load('invoices'), 200);
     }
 
-    /**
-     * PUT /api/products/{product}
-     * Update data produk.
-     */
+    
+ 
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([

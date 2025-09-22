@@ -11,7 +11,7 @@
     </nav>
   </UContainer>
   <slot />
-  <!-- Footer -->
+
   <UFooter class="mt-10 text-center text-gray-500">
     © {{ new Date().getFullYear() }} tripay-store. All rights reserved.
   </UFooter>
