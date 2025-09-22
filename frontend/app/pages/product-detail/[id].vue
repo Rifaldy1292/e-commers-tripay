@@ -7,6 +7,11 @@ import { checkoutApi } from "~/services/api/checkout";
 
 const route = useRoute();
 const productId = String(route.params.id);
+const isPaymentModalOpen = ref(false);
+const selectedMethod = ref<string>("indomaret");
+const isLoadingCheckout = ref(false);
+const errorMessage = ref<string | null>(null);
+const checkoutUrl = ref<string | null>(null);
 
 const {
   data: product,
@@ -21,24 +26,18 @@ const {
   },
 });
 
-const isPaymentModalOpen = ref(false);
-const selectedMethod = ref<string>("indomaret");
-const isLoadingCheckout = ref(false);
-const errorMessage = ref<string | null>(null);
-const checkoutUrl = ref<string | null>(null);
-
 const paymentMethods = [
   {
     label: "Indomaret",
     value: "indomaret",
     description: "Bayar di gerai Indomaret",
   },
-  { label: "QRIS", value: "qris", description: "Bayar dengan QRIS" },
-  {
-    label: "GoPay",
-    value: "gopay",
-    description: "Bayar via dompet digital GoPay",
-  },
+  // { label: "QRIS", value: "qris", description: "Bayar dengan QRIS" },
+  // {
+  //   label: "GoPay",
+  //   value: "gopay",
+  //   description: "Bayar via dompet digital GoPay",
+  // },
 ];
 const toast = useToast();
 
